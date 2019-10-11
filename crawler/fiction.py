@@ -1,59 +1,50 @@
-import re
+import re
+import urllib.request
+import chardet
 
-import urllib.request
+def getGtmlCode():
 
- 
+    html = urllib.request.urlopen("http://www.quanshuwang.com/book/44/44683").read() #获取网页源代码
+    html = html.decode("gbk") #转成该网站格式
+    reg = r'<li><a href="(.*?)" title=".*?">(.*?)</a></li>' #根据网站样式匹配的正则：(.*?)可以匹配所有东西，加括号为我们需要的
 
-def getGtmlCode():
+    reg = re.compile(reg)
 
-    html = urllib.request.urlopen("http://www.quanshuwang.com/book/44/44683").read() #获取网页源代码
+    urls = re.findall(reg, html)
 
-    html = html.decode("gbk") #转成该网站格式
+    for url in urls:
 
- 
+        #print(url)
 
-    reg = r'<li><a href="(.*?)" title=".*?">(.*?)</a></li>' #根据网站样式匹配的正则：(.*?)可以匹配所有东西，加括号为我们需要的
+        chapter_url = url[0] #章节路径
 
-    reg = re.compile(reg)
+        chapter_title = url[1] #章节名
 
-    urls = re.findall(reg, html)
 
-    for url in urls:
 
-        #print(url)
+        chapter_html = urllib.request.urlopen(chapter_url).read() #获取该章节的全文代码
 
-        chapter_url = url[0] #章节路径
+        # print(chardet.detect(chapter_html))
 
-        chapter_title = url[1] #章节名
+        chapter_html = chapter_html.decode("gbk")
 
- 
+        chapter_reg = r'</script>&nbsp;&nbsp;&nbsp;&nbsp;.*?<br />(.*?)<script type="text/javascript">' #匹配文章内容
 
-        chapter_html = urllib.request.urlopen(chapter_url).read() #获取该章节的全文代码
+        chapter_reg = re.compile(chapter_reg,re.S)
 
-        chapter_html = chapter_html.decode("gbk")
+        chapter_content = re.findall(chapter_reg, chapter_html)
 
-        chapter_reg = r'</script>&nbsp;&nbsp;&nbsp;&nbsp;.*?<br />(.*?)<script type="text/javascript">' #匹配文章内容
+        for content in chapter_content:
 
-        chapter_reg = re.compile(chapter_reg,re.S)
+            content = content.replace("&nbsp;&nbsp;&nbsp;&nbsp;","") #使用空格代替
 
-        chapter_content = re.findall(chapter_reg, chapter_html)
+            content = content.replace("<br />","") #使用空格代替
 
-        for content in chapter_content:
+            print(content)
 
-            content = content.replace("&nbsp;&nbsp;&nbsp;&nbsp;","") #使用空格代替
+            f = open('{}.txt'.format(chapter_title),'w',encoding='utf-8') #保存到本地
 
-            content = content.replace("<br />","") #使用空格代替
+            f.write(content)
 
-            print(content)
-
-            f = open('{}.txt'.format(chapter_title),'w') #保存到本地
-
-            f.write(content)
-
- 
-
- 
-
- 
 
 getGtmlCode()
